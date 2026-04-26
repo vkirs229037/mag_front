@@ -15,17 +15,17 @@ api.interceptors.request.use(config => {
 })
 
 export const authAPI = {
-  healthcheck: () => api.get('/healthcheck'),
+  healthcheck: () => api.get('/api/auth/healthcheck'),
   
   register: (email, password) => 
-    api.post('/api/register', { email, password }),
+    api.post('/api/auth/register', { email, password }),
   
   login: (email, password) => 
-    api.post('/api/login', { email, password }),
+    api.post('/api/auth/login', { email, password }),
   
-  getMe: () => api.get('/api/me'),
+  getMe: () => api.get('/api/auth/me'),
   
-  listUsers: () => api.get('/api/users'),
+  listUsers: () => api.get('/api/auth/users'),
   
-  deleteUser: (userId) => api.delete(`/api/users/${userId}`)
+  deleteUser: (userId) => api.delete(`/api/auth/users/${userId}`)
 }

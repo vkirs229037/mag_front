@@ -1,0 +1,76 @@
+name: CI/CD frontend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    container:
+      image: node:22-alpine
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deps
+        run: npm ci
+
+      # - name: Run tests (Vitest)
+      #   run: npm run test -- --reporter=junit --outputFile=test-results.xml
+
+      - name: Build static assets
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+
+  docker-build:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./build-context/dist
+
+      - name: Checkout deploy-config (for nginx conf)
+        uses: actions/checkout@v4
+        with:
+          repository: vkirs229037/mag_deploy
+          token: ${{ secrets.DEPLOY_CONFIG_PAT }}
+          path: ./deploy-config
+
+      - name: Prepare build context
+        run: |
+          cp Dockerfile ./build-context/
+          cp ./deploy-config/environments/frontend/nginx-frontend.conf ./build-context/
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./build-context
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

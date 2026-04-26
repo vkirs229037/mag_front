@@ -14,12 +14,12 @@ api.interceptors.request.use(config => {
 })
 
 export const searchAPI = {
-  healthcheck: () => api.get('/healthcheck'),
+  healthcheck: () => api.get('/api/search/healthcheck'),
   
-  listFiles: () => api.get('/api/files'),
+  listFiles: () => api.get('/api/search/files'),
   
   viewFile: (filepath, n = 10) => 
-    api.get(`/api/files/${encodeURIComponent(filepath)}`, { params: { n } }),
+    api.get(`/api/search/files/${encodeURIComponent(filepath)}`, { params: { n } }),
   
   search: (query, params = {}) => 
     api.get('/api/search', { 
